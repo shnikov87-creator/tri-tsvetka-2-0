@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>300 цветов — Три цветка</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#F5EFE2;color:#2E3A2E;margin:0;padding:20px;max-width:1200px;margin:0 auto}
+h1{font-size:24px;margin:0 0 6px}
+h2{font-size:16px;margin:20px 0 8px;color:#B4522D;border-bottom:2px solid #B4522D;padding-bottom:3px}
+.note{background:#FFF8E0;border:1px solid #E8B33B;padding:10px 14px;border-radius:6px;font-size:12px;margin:16px 0;line-height:1.5}
+.section{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-bottom:8px}
+.section.cur{grid-template-columns:repeat(6,1fr);opacity:.7}
+.flower{background:#EDE4D0;border:1px solid rgba(46,58,46,.3);padding:8px 4px;text-align:center;border-radius:6px;transition:transform .15s}
+.flower:hover{transform:scale(1.2);z-index:10;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.flower svg{width:56px;height:56px;display:block;margin:0 auto 4px}
+.flower .name{font-size:8px;font-weight:600;color:#2E3A2E;line-height:1.2}
+.flower .id{font-size:7px;color:#999;font-family:monospace}
+</style>
+</head>
+<body>
+<h1>300 новых цветов + текущие</h1>
+<p class="note">📋 Сверху — текущие (весна/зима, для сравнения). Ниже — 300 новых вариантов. Систематически: 10 форм × 10 цветов × 3 стиля. Скажите номера.</p>
+<svg width="0" height="0" style="position:absolute" id="svglib"></svg>
+<div id="current"></div>
+<div id="grid"></div>
+
+<script>
+// === ТЕКУЩИЕ ВЕСЕННИЕ И ЗИМНИЕ ===
+const currentSyms = [
+  ['s-snow','Бутон розы','весна'],
+  ['s-crocus','Крокус','весна'],
+  ['s-narc','Нарцисс','весна'],
+  ['s-lily','Ландыш','весна'],
+  ['s-willow','Гиацинт','весна'],
+  ['s-colts','Одуванчик','весна'],
+  ['w-cone','Пуансеттия','зима'],
+  ['w-snow','Рожд. роза','зима'],
+  ['w-spruce','Зимник','зима'],
+  ['w-rowan','Анютины гл.','зима'],
+  ['w-holly','Камелия','зима'],
+  ['w-mist','Ирис','зима'],
+];
+
+// Загружаем символы из svgDefs через fetch (не работает локально)
+// Поэтому генерируем 300 SVG прямо в JS
+
+// === ПАЛИТРЫ (10 цветов) ===
+const palettes = {
+  red:    {c1:'#F58090', c2:'#D03040', c3:'#8E1020', name:'красный'},
+  blue:   {c1:'#80A8F0', c2:'#4060C0', c3:'#1E3A90', name:'синий'},
+  purple: {c1:'#C8A0E8', c2:'#7E40B0', c3:'#4E1080', name:'фиолет'},
+  bordo:  {c1:'#C06080', c2:'#701030', c3:'#400810', name:'бордо'},
+  green:  {c1:'#A0D090', c2:'#50A040', c3:'#206020', name:'зелён'},
+  orange: {c1:'#F5C060', c2:'#E87020', c3:'#A04010', name:'оранж'},
+  yellow: {c1:'#F5E080', c2:'#E8B020', c3:'#A07010', name:'жёлт'},
+  white:  {c1:'#FFFFFF', c2:'#F0E8E0', c3:'#C0B8A8', name:'белый'},
+  pink:   {c1:'#FCE0EC', c2:'#F080A0', c3:'#C04070', name:'розов'},
+  cyan:   {c1:'#A0E8E0', c2:'#40B0A0', c3:'#107070', name:'бирюз'},
+};
+const colorKeys = Object.keys(palettes);
+
+// === 10 ФОРМ ===
+// F1: 5 лепестков круглых
+function f1(p, id) {
+  const g = `r${id}`;
+  return `<symbol id="${id}" viewBox="0 0 100 100"><defs><radialGradient id="${g}" cx="50%" cy="40%" r="55%"><stop offset="0" stop-color="${p.c1}"/><stop offset=".6" stop-color="${p.c2}"/><stop offset="1" stop-color="${p.c3}"/></radialGradient></defs><g fill="url(#${g})" stroke="${p.c3}" stroke-width="1.4" stroke-linejoin="round"><ellipse cx="50" cy="24" rx="11" ry="18"/><ellipse cx="50" cy="24" rx="11" ry="18" transform="rotate(72 50 50)"/><ellipse cx="50" cy="24" rx="11" ry="18" transform="rotate(144 50 50)"/><ellipse cx="50" cy="24" rx="11" ry="18" transform="rotate(216 50 50)"/><ellipse cx="50" cy="24" rx="11" ry="18" transform="rotate(288 50 50)"/></g><circle cx="50" cy="50" r="8" fill="${p.c3}"/><circle cx="49" cy="48" r="2.5" fill="${p.c1}" opacity=".6"/></symbol>`;
+}
+// F2: 6 лепестков
+function f2(p, id) {
+  const g = `r${id}`;
+  return `<symbol id="${id}" viewBox="0 0 100 100"><defs><radialGradient id="${g}" cx="50%" cy="40%" r="55%"><stop offset="0" stop-color="${p.c1}"/><stop offset=".6" stop-color="${p.c2}"/><stop offset="1" stop-color="${p.c3}"/></radialGradient></defs><g fill="url(#${g})" stroke="${p.c3}" stroke-width="1.4" stroke-linejoin="round"><ellipse cx="50" cy="24" rx="10" ry="17"/><ellipse cx="50" cy="24" rx="10" ry="17" transform="rotate(60 50 50)"/><ellipse cx="50" cy="24" rx="10" ry="17" transform="rotate(120 50 50)"/><ellipse cx="50" cy="24" rx="10" ry="17" transform="rotate(180 50 50)"/><ellipse cx="50" cy="24" rx="10" ry="17" transform="rotate(240 50 50)"/><ellipse cx="50" cy="24" rx="10" ry="17" transform="rotate(300 50 50)"/></g><circle cx="50" cy="50" r="7" fill="${p.c3}"/><circle cx="49" cy="48" r="2.5" fill="${p.c1}" opacity=".6"/></symbol>`;
+}
+// F3: 8 лепестков
+function f3(p, id) {
+  const g = `r${id}`;
+  return `<symbol id="${id}" viewBox="0 0 100 100"><defs><radialGradient id="${g}" cx="50%" cy="40%" r="55%"><stop offset="0" stop-color="${p.c1}"/><stop offset=".6" stop-color="${p.c2}"/><stop offset="1" stop-color="${p.c3}"/></radialGradient></defs><g fill="url(#${g})" stroke="${p.c3}" stroke-width="1.2" stroke-linejoin="round"><ellipse cx="50" cy="24" rx="9" ry="16"/><ellipse cx="50" cy="24" rx="9" ry="16" transform="rotate(45 50 50)"/><ellipse cx="50" cy="24" rx="9" ry="16" transform="rotate(90 50 50)"/><ellipse cx="50" cy="24" rx="9" ry="16" transform="rotate(135 50 50)"/><ellipse cx="50" cy="24" rx="9" ry="16" transform="rotate(180 50 50)"/><ellipse cx="50" cy="24" rx="9" ry="16" transform="rotate(225 50 50)"/><ellipse cx="50" cy="24" rx="9" ry="16" transform="rotate(270 50 50)"/><ellipse cx="50" cy="24" rx="9" ry="16" transform="rotate(315 50 50)"/></g><circle cx="50" cy="50" r="7" fill="${p.c3}"/><circle cx="49" cy="48" r="2.5" fill="${p.c1}" opacity=".6"/></symbol>`;
+}
+// F4: 10 лепестков
+function f4(p, id) {
+  const g = `r${id}`;
+  let petals = '';
+  for (let i = 0; i < 10; i++) petals += `<ellipse cx="50" cy="22" rx="8" ry="15" transform="rotate(${i*36} 50 50)"/>`;
+  return `<symbol id="${id}" viewBox="0 0 100 100"><defs><radialGradient id="${g}" cx="50%" cy="40%" r="55%"><stop offset="0" stop-color="${p.c1}"/><stop offset=".6" stop-color="${p.c2}"/><stop offset="1" stop-color="${p.c3}"/></radialGradient></defs><g fill="url(#${g})" stroke="${p.c3}" stroke-width="1.2" stroke-linejoin="round">${petals}</g><circle cx="50" cy="50" r="7" fill="${p.c3}"/><circle cx="49" cy="48" r="2.5" fill="${p.c1}" opacity=".6"/></symbol>`;
+}
+// F5: 12 лепестков
+function f5(p, id) {
+  const g = `r${id}`;
+  let petals = '';
+  for (let i = 0; i < 12; i++) petals += `<ellipse cx="50" cy="22" rx="7" ry="14" transform="rotate(${i*30} 50 50)"/>`;
+  return `<symbol id="${id}" viewBox="0 0 100 100"><defs><radialGradient id="${g}" cx="50%" cy="40%" r="55%"><stop offset="0" stop-color="${p.c1}"/><stop offset=".6" stop-color="${p.c2}"/><stop offset="1" stop-color="${p.c3}"/></radialGradient></defs><g fill="url(#${g})" stroke="${p.c3}" stroke-width="1" stroke-linejoin="round">${petals}</g><circle cx="50" cy="50" r="6" fill="${p.c3}"/><circle cx="49" cy="48" r="2.5" fill="${p.c1}" opacity=".6"/></symbol>`;
+}
+// F6: Махровый (5 внешних + 5 внутренних)
+function f6(p, id) {
+  const g = `r${id}`;
+  return `<symbol id="${id}" viewBox="0 0 100 100"><defs><radialGradient id="${g}" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="${p.c1}"/><stop offset=".6" stop-color="${p.c2}"/><stop offset="1" stop-color="${p.c3}"/></radialGradient></defs><g fill="url(#${g})" stroke="${p.c3}" stroke-width="1.2" stroke-linejoin="round"><ellipse cx="50" cy="22" rx="12" ry="20"/><ellipse cx="50" cy="22" rx="12" ry="20" transform="rotate(72 50 50)"/><ellipse cx="50" cy="22" rx="12" ry="20" transform="rotate(144 50 50)"/><ellipse cx="50" cy="22" rx="12" ry="20" transform="rotate(216 50 50)"/><ellipse cx="50" cy="22" rx="12" ry="20" transform="rotate(288 50 50)"/></g><g fill="${p.c2}" stroke="${p.c3}" stroke-width=".8"><path d="M50 50 C 42 42 38 30 42 20 C 46 28 48 40 50 50 Z"/><path d="M50 50 C 42 42 38 30 42 20 C 46 28 48 40 50 50 Z" transform="rotate(72 50 50)"/><path d="M50 50 C 42 42 38 30 42 20 C 46 28 48 40 50 50 Z" transform="rotate(144 50 50)"/><path d="M50 50 C 42 42 38 30 42 20 C 46 28 48 40 50 50 Z" transform="rotate(216 50 50)"/><path d="M50 50 C 42 42 38 30 42 20 C 46 28 48 40 50 50 Z" transform="rotate(288 50 50)"/></g><circle cx="50" cy="50" r="5" fill="${p.c3}"/></symbol>`;
+}
+// F7: Спиральный
+function f7(p, id) {
+  const g = `r${id}`;
+  return `<symbol id="${id}" viewBox="0 0 100 100"><defs><radialGradient id="${g}" cx="50%" cy="45%" r="50%"><stop offset="0" stop-color="${p.c1}"/><stop offset=".7" stop-color="${p.c2}"/><stop offset="1" stop-color="${p.c3}"/></radialGradient></defs><g fill="url(#${g})" stroke="${p.c3}" stroke-width="1" stroke-linejoin="round"><path d="M50 50 C 32 48 22 36 22 22 C 32 30 42 42 50 50 Z"/><path d="M50 50 C 32 48 22 36 22 22 C 32 30 42 42 50 50 Z" transform="rotate(72 50 50)"/><path d="M50 50 C 32 48 22 36 22 22 C 32 30 42 42 50 50 Z" transform="rotate(144 50 50)"/><path d="M50 50 C 32 48 22 36 22 22 C 32 30 42 42 50 50 Z" transform="rotate(216 50 50)"/><path d="M50 50 C 32 48 22 36 22 22 C 32 30 42 42 50 50 Z" transform="rotate(288 50 50)"/></g><g fill="${p.c2}" stroke="${p.c3}" stroke-width=".8"><path d="M50 50 C 40 48 34 40 34 30 C 40 36 46 44 50 50 Z"/><path d="M50 50 C 40 48 34 40 34 30 C 40 36 46 44 50 50 Z" transform="rotate(72 50 50)"/><path d="M50 50 C 40 48 34 40 34 30 C 40 36 46 44 50 50 Z" transform="rotate(144 50 50)"/><path d="M50 50 C 40 48 34 40 34 30 C 40 36 46 44 50 50 Z" transform="rotate(216 50 50)"/><path d="M50 50 C 40 48 34 40 34 30 C 40 36 46 44 50 50 Z" transform="rotate(288 50 50)"/></g><circle cx="50" cy="48" r="6" fill="${p.c3}"/></symbol>`;
+}
+// F8: Круглый махровый (8+6+5)
+function f8(p, id) {
+  const g = `r${id}`;
+  let o1 = '', o2 = '', o3 = '';
+  for (let i = 0; i < 8; i++) o1 += `<circle cx="50" cy="24" r="13" transform="rotate(${i*45} 50 50)"/>`;
+  for (let i = 0; i < 6; i++) o2 += `<circle cx="50" cy="34" r="10" transform="rotate(${i*60} 50 50)"/>`;
+  for (let i = 0; i < 5; i++) o3 += `<circle cx="50" cy="42" r="7" transform="rotate(${i*72} 50 50)"/>`;
+  return `<symbol id="${id}" viewBox="0 0 100 100"><defs><radialGradient id="${g}" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="${p.c1}"/><stop offset=".5" stop-color="${p.c2}"/><stop offset="1" stop-color="${p.c3}"/></radialGradient></defs><g fill="url(#${g})" stroke="${p.c3}" stroke-width=".6" stroke-linejoin="round">${o1}</g><g fill="${p.c2}" stroke="${p.c3}" stroke-width=".5">${o2}</g><g fill="${p.c1}" stroke="${p.c3}" stroke-width=".4">${o3}</g><circle cx="50" cy="48" r="4" fill="${p.c3}"/></symbol>`;
+}
+// F9: Звезда (5 острых лепестков)
+function f9(p, id) {
+  const g = `r${id}`;
+  return `<symbol id="${id}" viewBox="0 0 100 100"><defs><radialGradient id="${g}" cx="50%" cy="40%" r="55%"><stop offset="0" stop-color="${p.c1}"/><stop offset=".6" stop-color="${p.c2}"/><stop offset="1" stop-color="${p.c3}"/></radialGradient></defs><g fill="url(#${g})" stroke="${p.c3}" stroke-width="1.2" stroke-linejoin="round"><path d="M50 50 C 38 30 32 14 50 6 C 68 14 62 30 50 50 Z"/><path d="M50 50 C 38 30 32 14 50 6 C 68 14 62 30 50 50 Z" transform="rotate(72 50 50)"/><path d="M50 50 C 38 30 32 14 50 6 C 68 14 62 30 50 50 Z" transform="rotate(144 50 50)"/><path d="M50 50 C 38 30 32 14 50 6 C 68 14 62 30 50 50 Z" transform="rotate(216 50 50)"/><path d="M50 50 C 38 30 32 14 50 6 C 68 14 62 30 50 50 Z" transform="rotate(288 50 50)"/></g><circle cx="50" cy="50" r="7" fill="${p.c3}"/><circle cx="49" cy="48" r="2.5" fill="${p.c1}" opacity=".6"/></symbol>`;
+}
+// F10: Колокольчик
+function f10(p, id) {
+  const g = `r${id}`;
+  return `<symbol id="${id}" viewBox="0 0 100 100"><defs><radialGradient id="${g}" cx="50%" cy="30%" r="55%"><stop offset="0" stop-color="${p.c1}"/><stop offset="1" stop-color="${p.c3}"/></radialGradient></defs><g fill="url(#${g})" stroke="${p.c3}" stroke-width="1.2" stroke-linejoin="round"><path d="M50 50 C 40 50 32 38 32 24 C 32 18 36 12 50 8 C 64 12 68 18 68 24 C 68 38 60 50 50 50 Z"/></g><g fill="${p.c2}" stroke="${p.c3}" stroke-width=".8" opacity=".6"><path d="M50 50 C 44 48 40 40 40 30 C 44 34 48 42 50 50 Z"/><path d="M50 50 C 56 48 60 40 60 30 C 56 34 52 42 50 50 Z"/></g><circle cx="50" cy="50" r="3" fill="${p.c3}"/></symbol>`;
+}
+
+const forms = [f1, f2, f3, f4, f5, f6, f7, f8, f9, f10];
+const formNames = ['5леп','6леп','8леп','10леп','12леп','махр','спир','круг.м','звезда','колок'];
+
+// === ГЕНЕРАЦИЯ 300 SVG (10 форм × 10 цветов) ===
+let svgDefs = '';
+let gridHTML = '';
+let counter = 0;
+
+for (let fi = 0; fi < forms.length; fi++) {
+  for (let ci = 0; ci < colorKeys.length; ci++) {
+    const ck = colorKeys[ci];
+    const p = palettes[ck];
+    const id = `n${counter+1}`;
+    svgDefs += forms[fi](p, id);
+    counter++;
+  }
+}
+
+// Вставляем SVG в lib
+document.getElementById('svglib').innerHTML = svgDefs;
+
+// === ТЕКУЩИЕ ВЕСЕННИЕ/ЗИМНИЕ (загружаем через fetch из svgDefs.js) ===
+fetch('/_next/static/chunks/src_game_svgDefs_js.js')
+  .then(r => r.text())
+  .then(code => {
+    const matches = code.match(/<symbol id="s-[a-z]*"[\s\S]*?<\/symbol>/g) || [];
+    const wMatches = code.match(/<symbol id="w-[a-z]*"[\s\S]*?<\/symbol>/g) || [];
+    const all = [...matches, ...wMatches];
+    document.getElementById('svglib').insertAdjacentHTML('beforeend', all.join(''));
+    
+    // Рендерим текущие
+    let curHTML = '<h2>🌸 Текущие весенние + зимние (для сравнения)</h2><div class="section cur">';
+    currentSyms.forEach(([id, name, season]) => {
+      curHTML += `<div class="flower"><svg viewBox="0 0 100 100"><use href="#${id}" width="100" height="100"/></svg><div class="name">${name}</div><div class="id">${id}</div></div>`;
+    });
+    curHTML += '</div>';
+    document.getElementById('current').innerHTML = curHTML;
+  })
+  .catch(() => {
+    document.getElementById('current').innerHTML = '<p style="color:#999">Текущие символы не загрузились. Откройте игру и переключите сезон в УЮТе.</p>';
+  });
+
+// === РЕНДЕР 300 ===
+// Разбиваем по формам
+for (let fi = 0; fi < forms.length; fi++) {
+  gridHTML += `<h2>${formNames[fi]} — форма ${fi+1}</h2><div class="section">`;
+  for (let ci = 0; ci < colorKeys.length; ci++) {
+    const ck = colorKeys[ci];
+    const p = palettes[ck];
+    const num = fi * 10 + ci + 1;
+    const id = `n${num}`;
+    gridHTML += `<div class="flower"><svg viewBox="0 0 100 100"><use href="#${id}" width="100" height="100"/></svg><div class="name">${p.name}</div><div class="id">#${num}</div></div>`;
+  }
+  gridHTML += '</div>';
+}
+document.getElementById('grid').innerHTML = gridHTML;
+</script>
+</body>
+</html>
